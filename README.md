@@ -91,3 +91,13 @@ oc process -f swagger-proxy-template.yml \
 -p APP_ROUTE_HOST=$APP_ROUTE \
 | oc apply -f-
 ```
+
+Testing proxy pod:
+
+```
+TOKEN=$(oc whoami -t)
+curl -k --header "Authorization: Bearer $TOKEN" https://$APP_ROUTE/proxy/openapi/v2
+curl -k --header "Authorization: Bearer $TOKEN" https://$APP_ROUTE/api/v1/namespaces/
+```
+
+On the UI use the url `https://$APP_ROUTE/proxy/openapi/v2` and token `$TOKEN`.
