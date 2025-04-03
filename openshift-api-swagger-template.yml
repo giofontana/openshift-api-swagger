@@ -35,7 +35,7 @@ objects:
       sourceStrategy:
         from:
           kind: ImageStreamTag
-          name: httpd:2.4
+          name: httpd:latest
           namespace: ${IMAGE_STREAM_NAMESPACE}
       type: Source
     triggers:
