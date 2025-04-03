@@ -53,7 +53,8 @@ A [template](https://docs.openshift.com/container-platform/4.13/openshift_images
 Login to a cluster and create a new project:
 
 ```
-oc new-project <project-name>
+oc create namespace openshift-api-swagger
+oc project openshift-api-swagger
 ```
 
 Instantiate the [openshift-api-swagger](openshift-api-swagger-template.yml) template:
@@ -66,4 +67,27 @@ Navigate to _host_ specified in the route that has been created:
 
 ```
 oc get routes openshift-api-swagger
+```
+
+# Handling cross-origin (CORS) issue
+
+If you get the following error message when using the API url (e.g., https://api.example.com:6443/openapi/v2) deploy the proxy pod.
+
+Error:
+```
+Fetch error
+Possible cross-origin (CORS) issue? The URL origin (https://api.simpsons.lab.gfontana.me:6443) does not match the page (https://openshift-api-swagger-openshift-api-swagger.apps.simpsons.lab.gfontana.me). Check the server returns the correct 'Access-Control-Allow-*' headers.
+```
+
+Deploying proxy pod:
+
+```
+oc project openshift-api-swagger
+API_SERVER=$(oc whoami --show-server | cut -d/ -f3 | cut -d: -f1)
+APP_ROUTE=$(oc get route openshift-api-swagger -o jsonpath='{.spec.host}')
+oc process -f swagger-proxy-template.yml \
+-p NAMESPACE=openshift-api-swagger \
+-p API_SERVER_HOST=$API_SERVER \
+-p APP_ROUTE_HOST=$APP_ROUTE \
+| oc apply -f-
 ```

@@ -1,0 +1,156 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  annotations:
+    description: OpenShift Swagger UI Proxy
+    iconClass: icon-load-balancer
+    tags: api,swagger
+  name: openshift-api-swagger-proxy
+objects:
+- kind: ConfigMap
+  apiVersion: v1
+  metadata:
+    name: haproxy-config
+    namespace: ${NAMESPACE}
+  data:
+    haproxy.cfg: |
+      global
+        daemon
+        maxconn 256
+  
+      defaults
+        mode http
+        timeout connect 5s
+        timeout client  50s
+        timeout server  50s
+  
+      frontend http-in
+        bind *:8080
+  
+        acl is_openapi path_beg /proxy/openapi
+        acl is_k8s_api path_beg /api/
+  
+        use_backend openapi_backend if is_openapi
+        use_backend api_backend if is_k8s_api
+  
+        default_backend fallback_backend
+  
+      backend openapi_backend
+        http-request set-path /openapi/v2
+        server ocp-api ${API_SERVER_HOST}:6443 ssl verify none
+  
+      backend api_backend
+        server ocp-api ${API_SERVER_HOST}:6443 ssl verify none
+  
+      backend fallback_backend
+        http-request deny
+- kind: Deployment
+  apiVersion: apps/v1
+  metadata:
+    name: proxy
+    namespace: ${NAMESPACE}
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: proxy
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: proxy
+      spec:
+        volumes:
+          - name: config-volume
+            configMap:
+              name: haproxy-config
+              defaultMode: 420
+        containers:
+          - resources: {}
+            terminationMessagePath: /dev/termination-log
+            name: haproxy
+            command:
+              - /usr/sbin/haproxy
+              - '-f'
+              - /etc/haproxy/haproxy.cfg
+              - '-db'
+            ports:
+              - containerPort: 8080
+                protocol: TCP
+            imagePullPolicy: Always
+            volumeMounts:
+              - name: config-volume
+                mountPath: /etc/haproxy/
+            terminationMessagePolicy: File
+            image: registry.connect.redhat.com/haproxytech/haproxy
+        restartPolicy: Always
+        terminationGracePeriodSeconds: 30
+        dnsPolicy: ClusterFirst
+        securityContext: {}
+        schedulerName: default-scheduler
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxUnavailable: 25%
+        maxSurge: 25%
+    revisionHistoryLimit: 10
+    progressDeadlineSeconds: 600
+- kind: Service
+  apiVersion: v1
+  metadata:
+    name: proxy
+    namespace: ${NAMESPACE}
+  spec:
+    ports:
+      - protocol: TCP
+        port: 8080
+        targetPort: 8080
+    type: ClusterIP
+    selector:
+      app: proxy
+- kind: Route
+  apiVersion: route.openshift.io/v1
+  metadata:
+    name: api-proxy
+    namespace: ${NAMESPACE}
+  spec:
+    host: ${APP_ROUTE_HOST}
+    path: /api
+    to:
+      kind: Service
+      name: proxy
+      weight: 100
+    port:
+      targetPort: 8080
+    tls:
+      termination: edge
+      insecureEdgeTerminationPolicy: Redirect
+    wildcardPolicy: None
+- kind: Route
+  apiVersion: route.openshift.io/v1
+  metadata:
+    name: openapi-proxy
+    namespace: ${NAMESPACE}
+  spec:
+    host: ${APP_ROUTE_HOST}
+    path: /proxy/openapi
+    to:
+      kind: Service
+      name: proxy
+      weight: 100
+    port:
+      targetPort: 8080
+    tls:
+      termination: edge
+      insecureEdgeTerminationPolicy: Redirect
+    wildcardPolicy: None
+parameters:
+- name: NAMESPACE
+  description: Namespace Swagger is deployed
+  required: true
+- name: API_SERVER_HOST
+  description: The OpenShift API hostname (e.g., api.example.com)
+  required: true
+- name: APP_ROUTE_HOST
+  description: The public host for the Swagger UI (e.g., openshift-api-swagger-openshift-api-swagger.apps.example.com)
+  required: true
