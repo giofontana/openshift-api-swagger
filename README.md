@@ -93,4 +93,8 @@ curl -k --header "Authorization: Bearer $TOKEN" https://$APP_ROUTE/proxy/openapi
 curl -k --header "Authorization: Bearer $TOKEN" https://$APP_ROUTE/api/v1/namespaces/
 ```
 
-On the UI use the url `https://$APP_ROUTE/proxy/openapi/v2` and token `$TOKEN`.
+On the UI use the following url and token:
+```
+echo "https://$APP_ROUTE/proxy/openapi/v2"
+echo $TOKEN
+```
