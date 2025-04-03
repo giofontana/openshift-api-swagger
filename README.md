@@ -10,6 +10,28 @@ This application provides an interface to the OpenShift V4 Rest API. It can be r
 
 The Swagger UI communicates to OpenShift via REST. 
 
+# Deployment to OpenShift
+
+A [template](https://docs.openshift.com/container-platform/4.13/openshift_images/using-templates.html) is available for a streamlined deployment to OpenShift. Use the following steps to deploy the application:
+
+Login to a cluster and create a new project:
+
+```
+oc create namespace openshift-api-swagger
+oc project openshift-api-swagger
+```
+
+Instantiate the [openshift-api-swagger](openshift-api-swagger-template.yml) template:
+
+```
+oc process -f openshift-api-swagger-template.yml | oc apply -f-
+```
+
+Navigate to _host_ specified in the route that has been created:
+
+```
+oc get routes openshift-api-swagger
+```
 
 # Authentication
 
@@ -44,32 +66,9 @@ At the top of the page, you are presented with two input fields:
 
 Hit the **Explore** to begin traversing the API. Consult the [Swagger Documentation](http://swagger.io/getting-started/)on how to use the Swagger UI. 
 
-If the Swagger spec fails to load, you may need to configure OpenShift to support [cross-origin](http://www.w3.org/TR/cors/) requests. Additional steps are found in the OpenShift [documentation](https://docs.openshift.com/container-platform/4.13/security/allowing-javascript-access-api-server.html).
-
-# Deployment to OpenShift
-
-A [template](https://docs.openshift.com/container-platform/4.13/openshift_images/using-templates.html) is available for a streamlined deployment to OpenShift. Use the following steps to deploy the application:
-
-Login to a cluster and create a new project:
-
-```
-oc create namespace openshift-api-swagger
-oc project openshift-api-swagger
-```
-
-Instantiate the [openshift-api-swagger](openshift-api-swagger-template.yml) template:
-
-```
-oc process -f openshift-api-swagger-template.yml | oc apply -f-
-```
-
-Navigate to _host_ specified in the route that has been created:
-
-```
-oc get routes openshift-api-swagger
-```
-
 # Handling cross-origin (CORS) issue
+
+If the Swagger spec fails to load, you may need to configure OpenShift to support [cross-origin](http://www.w3.org/TR/cors/) requests. Additional steps are found in the OpenShift [documentation](https://docs.openshift.com/container-platform/4.13/security/allowing-javascript-access-api-server.html).
 
 If you get the following error message when using the API url (e.g., https://api.example.com:6443/openapi/v2) deploy the proxy pod.
 
