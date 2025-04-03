@@ -70,15 +70,9 @@ Hit the **Explore** to begin traversing the API. Consult the [Swagger Documentat
 
 If the Swagger spec fails to load, you may need to configure OpenShift to support [cross-origin](http://www.w3.org/TR/cors/) requests. Additional steps are found in the OpenShift [documentation](https://docs.openshift.com/container-platform/4.13/security/allowing-javascript-access-api-server.html).
 
-If you get the following error message when using the API url (e.g., https://api.example.com:6443/openapi/v2) deploy the proxy pod.
+An alternative is to use a proxy container. See procedure below.
 
-Error:
-```
-Fetch error
-Possible cross-origin (CORS) issue? The URL origin (https://api.simpsons.lab.gfontana.me:6443) does not match the page (https://openshift-api-swagger-openshift-api-swagger.apps.simpsons.lab.gfontana.me). Check the server returns the correct 'Access-Control-Allow-*' headers.
-```
-
-Deploying proxy pod:
+Deploying proxy container:
 
 ```
 oc project openshift-api-swagger
